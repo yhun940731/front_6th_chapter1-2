@@ -2,6 +2,9 @@
 const eventManager = new WeakMap();
 const eventTypes = new Set();
 
+// root별로 등록된 이벤트 핸들러를 추적
+const rootEventHandlers = new WeakMap();
+
 /**
  * @param {Element} element
  * @param {string} eventType
@@ -43,9 +46,21 @@ export function removeEvent(element, eventType, handler) {
 }
 
 export function setupEventListeners(root) {
+  // 이미 등록된 핸들러가 있다면 제거
+  if (rootEventHandlers.has(root)) {
+    const existingHandlers = rootEventHandlers.get(root);
+    existingHandlers.forEach((handler, eventType) => {
+      root.removeEventListener(eventType, handler);
+    });
+  }
+
+  // 새로운 핸들러 맵 생성
+  const handlers = new Map();
+  rootEventHandlers.set(root, handlers);
+
   // eventTypes를 순회하여 각 이벤트 타입에 대해 위임된 핸들러 설정
   eventTypes.forEach((eventType) => {
-    root.addEventListener(eventType, (e) => {
+    const handleEvent = (e) => {
       let currentTarget = e.target;
 
       // 이벤트 버블링을 통해 상위 요소까지 핸들러 검색
@@ -61,6 +76,10 @@ export function setupEventListeners(root) {
 
         currentTarget = currentTarget.parentElement;
       }
-    });
+    };
+
+    // 핸들러 등록 및 추적
+    handlers.set(eventType, handleEvent);
+    root.addEventListener(eventType, handleEvent);
   });
 }
