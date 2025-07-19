@@ -54,8 +54,6 @@ export function createElement(vNode) {
     $el.appendChild(createElement(child));
   });
 
-  addEvent($el, vNode.props);
-
   return $el;
 }
 
@@ -70,6 +68,18 @@ function updateAttributes($el, props) {
         $el.className = value;
       } else if (key === "style" && typeof value === "object") {
         Object.assign($el.style, value);
+      } else if (key === "selected" && $el.tagName === "OPTION") {
+        // option 요소의 selected 속성은 DOM 프로퍼티로 설정
+        $el.selected = Boolean(value);
+      } else if (key === "checked" && $el.tagName === "INPUT" && ($el.type === "checkbox" || $el.type === "radio")) {
+        // checkbox, radio의 checked 속성은 DOM 프로퍼티로 설정
+        $el.checked = Boolean(value);
+      } else if (
+        key === "value" &&
+        ($el.tagName === "INPUT" || $el.tagName === "SELECT" || $el.tagName === "TEXTAREA")
+      ) {
+        // input, select, textarea의 value는 DOM 프로퍼티로 설정
+        $el.value = value;
       } else {
         $el.setAttribute(key, value);
       }
